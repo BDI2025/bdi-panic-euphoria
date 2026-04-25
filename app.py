@@ -121,30 +121,42 @@ h1, h2, h3, h4 {{
 hr {{ border-color:#444; }}
 .small-muted {{ color:{MUTED}; font-size:12px; font-family:'Poppins',sans-serif; }}
 .bdi-header {{
-    display:flex; align-items:center; gap:18px;
-    padding:14px 20px; border-radius:10px;
+    display:flex; align-items:center; gap:28px;
+    padding:28px 32px; border-radius:12px;
     background: linear-gradient(135deg, {BRAND_GREEN} 0%, {BRAND_TURQ} 60%, {BRAND_LIME} 100%);
-    margin-bottom: 18px;
+    margin-bottom: 28px;
+    min-height: 100px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.25);
 }}
-.bdi-header .logo {{
-    font-family:'Bebas Neue',sans-serif; font-size:42px;
-    color:white; letter-spacing:4px; line-height:1;
+.bdi-header .logo-block {{ display:flex; flex-direction:column; gap:8px; }}
+.bdi-header .logo-row {{
+    display:flex; align-items:center; gap:8px; line-height:1;
 }}
-.bdi-header .logo .arrow {{ color:white; margin-left:2px; }}
+.bdi-header .logo-bdi {{
+    font-family:'Playfair Display','Georgia','Times New Roman',serif;
+    font-weight:900; font-size:56px; color:white;
+    line-height:1; letter-spacing:-1px;
+}}
+.bdi-header .logo-arrow {{
+    color:white; font-size:48px; line-height:1;
+    margin-left:2px; transform:translateY(-2px);
+}}
 .bdi-header .tagline {{
-    font-family:'Poppins',sans-serif; font-size:11px;
-    letter-spacing:3px; color:rgba(255,255,255,.92);
-    text-transform:uppercase;
+    font-family:'Poppins',sans-serif; font-size:10px;
+    letter-spacing:2.5px; color:rgba(255,255,255,.92);
+    text-transform:uppercase; line-height:1;
 }}
 .bdi-header .title-block {{
     margin-left:auto; text-align:right; color:white;
+    display:flex; flex-direction:column; gap:6px;
 }}
 .bdi-header .title-block .h1 {{
-    font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px;
+    font-family:'Bebas Neue',sans-serif; font-size:34px; letter-spacing:2px;
+    line-height:1.05;
 }}
 .bdi-header .title-block .h2 {{
     font-family:'Poppins',sans-serif; font-size:11px; letter-spacing:2px;
-    text-transform:uppercase; opacity:.92;
+    text-transform:uppercase; opacity:.92; line-height:1;
 }}
 .regime-badge {{
     display:inline-block; padding:8px 18px; border-radius:30px;
@@ -161,18 +173,23 @@ st.markdown(CSS, unsafe_allow_html=True)
 
 
 def bdi_header(title: str, subtitle: str):
-    st.markdown(f"""
-    <div class="bdi-header">
-        <div>
-            <div class="logo">BDI<span class="arrow">▶</span></div>
-            <div class="tagline">Consultora Patrimonial Integral</div>
-        </div>
-        <div class="title-block">
-            <div class="h1">{title}</div>
-            <div class="h2">{subtitle}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    """Header BDI con logo recreado con CSS+texto (robusto, sin SVG inline)."""
+    html = (
+        '<div class="bdi-header">'
+          '<div class="logo-block">'
+            '<div class="logo-row">'
+              '<span class="logo-bdi">BDI</span>'
+              '<span class="logo-arrow">&#9654;</span>'
+            '</div>'
+            '<div class="tagline">Consultora Patrimonial Integral</div>'
+          '</div>'
+          '<div class="title-block">'
+            f'<div class="h1">{title}</div>'
+            f'<div class="h2">{subtitle}</div>'
+          '</div>'
+        '</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 # ==============================================================================
@@ -337,15 +354,16 @@ def composite_z(zcomp: pd.DataFrame, weights: dict | None = None) -> pd.Series:
 # VISUALES
 # ==============================================================================
 def gauge_panic(z: float) -> go.Figure:
-    """Gauge horizontal con 5 zonas centradas en 0."""
+    """Gauge con 5 zonas centradas en 0. Sin overlap entre número y etiqueta."""
     val = float(np.clip(z, -3, 3))
     fig = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=val,
-        number=dict(font=dict(size=52, color=BRAND_LIME), valueformat=".2f"),
+        number=dict(font=dict(size=48, color=BRAND_LIME), valueformat=".2f"),
         delta=dict(reference=0, valueformat=".2f",
                    increasing=dict(color=BRAND_LIME),
                    decreasing=dict(color=COL_FEAR)),
+        domain=dict(x=[0, 1], y=[0.30, 1.0]),  # gauge en 70% superior
         gauge=dict(
             axis=dict(range=[-3, 3], tickwidth=1, tickcolor=MUTED,
                       tickvals=[-3, -1, -0.5, 0.5, 1, 3]),
@@ -364,9 +382,9 @@ def gauge_panic(z: float) -> go.Figure:
     ))
     fig.update_layout(
         paper_bgcolor=PANEL, plot_bgcolor=PANEL, font=dict(color=TXT),
-        margin=dict(l=20, r=20, t=10, b=30), height=320,
+        margin=dict(l=20, r=20, t=20, b=60), height=380,
         annotations=[dict(
-            x=0.5, y=-0.05, xref="paper", yref="paper",
+            x=0.5, y=0.06, xref="paper", yref="paper",
             text=f"<b>{regime_from_z(val).upper()}</b>",
             showarrow=False, font=dict(color=regime_color(val), size=22),
         )],
@@ -567,9 +585,9 @@ st.markdown("")
 # ==============================================================================
 # TABS
 # ==============================================================================
-tab_dash, tab_comp, tab_regimes, tab_edu, tab_data = st.tabs([
+tab_dash, tab_comp, tab_regimes, tab_theory, tab_math, tab_data = st.tabs([
     "🌡️ Régimen actual", "🧩 Componentes", "📚 Regímenes históricos",
-    "🎓 Metodología", "📥 Datos"
+    "📖 Teoría", "🧮 Matemática avanzada", "📥 Datos"
 ])
 
 # ------------------------------- DASHBOARD ------------------------------------
@@ -689,117 +707,218 @@ with tab_regimes:
     })
     st.dataframe(counts, use_container_width=True, hide_index=True)
 
-# ------------------------------- EDUCACIÓN ------------------------------------
-with tab_edu:
-    st.markdown("## 🎓 Metodología y fórmulas")
+# ------------------------------- TEORÍA SENCILLA ------------------------------
+with tab_theory:
+    st.markdown("## 📖 Teoría — para entender el modelo sin matemática")
     st.markdown(
-        "El **Panic/Euphoria Model** se inspira en el modelo del estratega "
-        "Tobias Levkovich (Citi) y lo extiende con componentes de bonos, "
-        "tipo de cambio y volatilidad. La idea central es construir un "
-        "agregado en Z-scores absolutos para que valores extremos sean "
-        "comparables a lo largo del tiempo."
+        "El **Modelo Pánico/Euforia BDI** mide cuán **asustado** o cuán **eufórico** "
+        "está el mercado, pero usando 9 señales de **acciones, bonos, volatilidad y "
+        "tipo de cambio** combinadas en un solo número. La idea original es del "
+        "estratega Tobias Levkovich (Citi); BDI la abre y la extiende."
+    )
+    st.markdown(
+        "La salida es un **Z-score compuesto** entre -3 y +3. Negativo = miedo. "
+        "Positivo = codicia. Por encima de +1 → euforia. Por debajo de -1 → pánico."
     )
 
-    st.markdown("### 1) Por qué Z-score y no percentil")
+    st.markdown("### Cómo leer el termómetro")
+    st.markdown("""
+    | Z compuesto       | Régimen     | Qué pensar                                              |
+    |-------------------|-------------|---------------------------------------------------------|
+    | **Z ≤ -1.0**      | 🟥 PÁNICO   | Capitulación. Suelen aparecer oportunidades de compra.  |
+    | -1.0 < Z ≤ -0.5   | 🟧 Miedo    | Aversión al riesgo elevada.                             |
+    | -0.5 < Z < 0.5    | 🟨 Neutral  | Sin sesgo, mercado en rango.                            |
+    | 0.5 ≤ Z < 1.0     | 🟩 Codicia  | Apetito de riesgo. Vigilar exposición.                  |
+    | **Z ≥ 1.0**       | 🟢 EUFORIA  | Probabilidad alta de corrección técnica.                |
+    """)
+
+    st.markdown("### Los 9 componentes en lenguaje simple")
+
+    st.markdown("**1. Momentum del S&P 500**")
+    st.markdown(
+        "¿Está el mercado subiendo con fuerza o cayendo? Distancia del precio "
+        "actual al promedio de 6 meses."
+    )
+    st.markdown("**2. Amplitud (Breadth) — RSP vs SPY**")
+    st.markdown(
+        "¿Sube **todo** el mercado o solo unas pocas megacaps? Si solo suben "
+        "las gigantes, el rally es frágil aunque el índice marque récords."
+    )
+    st.markdown("**3. Fortaleza del precio**")
+    st.markdown(
+        "¿Estamos cerca del techo de los últimos 12 meses? Cuanto más cerca, "
+        "más fortaleza."
+    )
+    st.markdown("**4. VIX (índice del miedo)**")
+    st.markdown(
+        "Mide volatilidad esperada en el S&P 500 a 30 días. <15 calma. "
+        "20–30 estrés. >30 pánico real. Cuanto más alto, más miedo."
+    )
+    st.markdown("**5. Estructura de plazos del VIX**")
+    st.markdown(
+        "Compara VIX a 1 mes vs VIX a 3 meses. Cuando se invierte "
+        "(corto > largo), hay **pánico inmediato** — los traders pagan caro "
+        "para protegerse YA."
+    )
+    st.markdown("**6. Vuelo a la calidad (Safe Haven)**")
+    st.markdown(
+        "¿La gente se está pasando de acciones a bonos del Tesoro? "
+        "Comparamos retorno SPY vs TLT a 20 días."
+    )
+    st.markdown("**7. Apetito por bonos basura**")
+    st.markdown(
+        "Bonos high-yield (HYG) vs investment-grade (LQD). Cuando hay "
+        "confianza, los basura suben. Cuando hay miedo, todos huyen a calidad."
+    )
+    st.markdown("**8. Curva de tasas (TLT/IEF)**")
+    st.markdown(
+        "Proxy de la curva 10Y–2Y. Cuando se aplana o invierte, el mercado "
+        "está descontando **recesión** = miedo estructural."
+    )
+    st.markdown("**9. Dólar como refugio (DXY)**")
+    st.markdown(
+        "Cuando estalla una crisis global, el dólar se fortalece "
+        "(flight-to-quality). Un DXY que se dispara de repente es señal "
+        "de **stress global**."
+    )
+
+    st.markdown("### Por qué este modelo le agrega valor a Fear & Greed clásico")
+    st.markdown("""
+    - **Multi-asset:** no mira solo acciones; bonos, FX y volatilidad
+      muestran tensiones que el SPX todavía no refleja.
+    - **Z-score absoluto:** un Z = -3 es comparable entre 2008, 2020 y
+      cualquier crisis futura. Un percentil rolling no.
+    - **Regímenes con umbrales fijos:** PÁNICO ≤ -1, EUFORIA ≥ +1. Sin
+      ambigüedad.
+    - **Pesos ajustables:** podés darle más peso al VIX si te interesa
+      el ángulo de volatilidad, o al crédito si te interesa el ángulo
+      de financiamiento.
+    """)
+
+    st.markdown("### Casos famosos donde el modelo funcionó")
+    st.markdown("""
+    - **Marzo 2020 (COVID):** Z compuesto bajó a **~-3**. SPX rebotó +60% en 12 meses.
+    - **Octubre 2022:** Z ≈ -1.5 (pánico prolongado). Inicio del bull 2023.
+    - **Enero 2018 (Volmageddon):** Z ≈ +1.8 → corrección rápida del 10%.
+    - **Diciembre 2021:** Z ≈ +1.5 → inicio del bear market 2022.
+    """)
+
+# ------------------------------- MATEMÁTICA AVANZADA --------------------------
+with tab_math:
+    st.markdown("## 🧮 Matemática del modelo + decisiones de diseño")
+    st.markdown(
+        "Esta sección documenta las **fórmulas exactas** y las decisiones de "
+        "modelado que diferencian el Pánico/Euforia BDI del modelo original "
+        "de Citi (Levkovich) y de cualquier réplica académica simple."
+    )
+
+    st.markdown("### 1) Z-score con ventana larga (5 años)")
     st.latex(r"""
     Z_t \;=\; \frac{x_t - \mu_{t-1260:t-1}}{\sigma_{t-1260:t-1}}
     """)
     st.markdown(
-        "Usamos ventana de 5 años (1260 días hábiles) para que cubra al menos "
-        "un ciclo de mercado completo. La diferencia clave con un percentil "
-        "rolling es que el Z-score conserva la magnitud del extremo: un día "
-        "con Z = -3 es 'mucho más extremo' que uno con Z = -1, mientras que "
-        "un percentil rolling truncaría ambos en la cola más baja."
+        "Usamos **1260 días hábiles ≈ 5 años**, suficiente para cubrir un "
+        "ciclo de mercado completo (expansión + contracción). Con ventanas "
+        "más cortas, los regímenes estructurales nuevos contaminan rápidamente "
+        "la media y el desvío, dejando todo el composite atascado en el "
+        "neutral."
     )
 
     st.markdown("### 2) Composite y umbrales")
     st.latex(r"""
     Z_t^{\text{compuesto}} \;=\; \sum_{i=1}^{9} w_i \cdot Z_t^{(i)}
+    \quad \text{con } w_i = \tfrac{1}{9}
+    \;\;\text{(o configurables vía sidebar)}
     """)
-    st.markdown("""
-    | Umbral             | Régimen     | Lectura típica                                      |
-    |--------------------|-------------|-----------------------------------------------------|
-    | Z ≤ -1.0           | **PÁNICO**  | Capitulación. Edge contraria histórica alta.        |
-    | -1.0 < Z ≤ -0.5    | Miedo       | Aversión al riesgo elevada.                         |
-    | -0.5 < Z < 0.5     | Neutral     | Sin sesgo, mercado en rango.                        |
-    | 0.5 ≤ Z < 1.0      | Codicia     | Apetito por riesgo notable. Vigilar exposición.     |
-    | Z ≥ 1.0            | **EUFORIA** | Probabilidad alta de corrección técnica.            |
-    """)
+    st.markdown(
+        "Suavizado final con SMA-3 días. Recortado a [-3.5, +3.5] para "
+        "estabilidad visual."
+    )
 
-    st.markdown("### 3) Los 9 componentes")
+    st.markdown("### 3) Los 9 componentes — fórmulas exactas")
     cmps = [
         ("**1. Momentum**",
          r"x = \frac{P^{SPX}_t}{\overline{P}^{SPX}_{t-125:t}} - 1",
-         "Sobrecompra/sobreventa de mediano plazo."),
+         "SPX vs SMA-125. Sobrecompra/sobreventa de mediano plazo."),
         ("**2. Breadth (RSP/SPY)**",
          r"x = \frac{P^{RSP}_t}{P^{SPY}_t}",
-         "Concentración: si las megacaps lideran y el resto queda atrás, "
-         "breadth pobre → miedo subyacente."),
+         "Concentración: equal-weight vs cap-weight."),
         ("**3. 52w Strength**",
-         r"x = \frac{P^{NYA}_t}{\max(P^{NYA}_{t-252:t})}",
-         "Distancia al máximo de 52 semanas. Cerca de 1 = fortaleza."),
+         r"x = \frac{P^{NYA}_t}{\max\big(P^{NYA}_{t-252:t}\big)}",
+         "Distancia al máximo de 52 semanas del NYSE Composite."),
         ("**4. VIX nivel (invertido)**",
          r"x = -Z(VIX_t)",
-         "Volatilidad implícita en valor absoluto. Alto = miedo (de ahí el signo negativo)."),
+         "Volatilidad implícita absoluta. VIX alto = miedo (signo negativo)."),
         ("**5. VIX term structure (invertido)**",
          r"x = -Z\!\left(\frac{VIX_t}{VIX3M_t}\right)",
-         "Pendiente de la curva de volatilidad. Cuando se invierte (VIX > VIX3M), "
-         "los traders pagan caro la cobertura corta → pánico."),
+         "Pendiente de la curva de volatilidad. Inversión = pánico inmediato."),
         ("**6. Safe haven flight**",
          r"x = r^{SPY}_{20d} - r^{TLT}_{20d}",
-         "Diferencia de retorno acciones vs bonos largos. Cuando los flujos "
-         "huyen al refugio, TLT supera a SPY → x < 0 → miedo."),
+         "Spread de retornos 20-día acciones vs bonos largos."),
         ("**7. Junk Bond Demand**",
          r"x = \frac{P^{HYG}_t}{P^{LQD}_t}",
-         "High-yield vs investment-grade. Risk-on: HY outperforma."),
+         "Cociente high-yield vs investment-grade."),
         ("**8. Term spread (TLT/IEF)**",
          r"x = \frac{P^{TLT}_t}{P^{IEF}_t}",
-         "Proxy de la curva 10Y-2Y. Aplanamiento/inversión → expectativas "
-         "de recesión → miedo."),
+         "Proxy curva 10Y–2Y vía bonos largos vs medianos."),
         ("**9. DXY refugio (invertido)**",
          r"x = -Z(DXY_t)",
-         "Dollar Index. Cuando el dólar se fortalece bruscamente es flight-to-quality "
-         "→ se invierte el signo."),
+         "Dollar Index. Fortalecimiento abrupto = flight-to-quality."),
     ]
     for title, formula, expl in cmps:
         st.markdown(title)
         st.latex(formula)
         st.markdown(expl)
 
-    st.markdown("### 4) Casos históricos para calibrar")
+    st.markdown("### 4) Mejoras BDI sobre el modelo Citi original")
     st.markdown("""
-    - **Marzo 2020 (COVID):** el VIX llegó a 82, HYG cayó 20% en días, DXY se
-      disparó. El composite Z bajó a ~-3. Rebote del SPX 60% en los 12 meses
-      siguientes.
-    - **Octubre 2022:** Z compuesto en torno a -1.5 (pánico moderado y prolongado).
-      Inicio del bull market 2023.
-    - **Enero 2018:** Z ≈ +1.8 antes del 'Volmageddon'. Corrección rápida del 10%.
-    - **Diciembre 2021:** Z ≈ +1.5 antes del bear market 2022.
+    | Aspecto                    | Citi Pánico/Euforia                | **BDI V2 mejora**                                                              |
+    |----------------------------|------------------------------------|--------------------------------------------------------------------------------|
+    | **Acceso**                 | Propietario, paywall               | **Open-source**, datos gratis de Yahoo Finance                                 |
+    | **Componentes**            | 9 (no todos públicos)              | **9 documentados**, fórmulas exactas en esta pestaña                           |
+    | **Frecuencia**             | Semanal                            | **Diaria** (granularidad táctica)                                              |
+    | **FX**                     | No incluido                        | **DXY** como flight-to-quality global                                          |
+    | **Curva de tasas**         | No incluida                        | **TLT/IEF** como proxy 10Y–2Y                                                  |
+    | **Estructura volatilidad** | No incluida                        | **VIX/VIX3M** captura pánico inmediato                                         |
+    | **Pesos**                  | No publicados                      | **1/9 igual o ajustables** vía sidebar                                         |
+    | **Lookback**               | No documentado                     | **1260 días explícitos**                                                       |
+    | **Output**                 | 0–1                                | **Z-score absoluto** (-3.5..+3.5), magnitudes comparables a través del tiempo  |
+    | **Data resilience**        | Modelo cae si falta input          | **Fallbacks automáticos** (HYG→JNK, TLT→IEF, VIX estimado vía vol realizada)   |
     """)
 
-    st.markdown("### 5) Limitaciones honestas")
+    st.markdown("### 5) Por qué Z absoluto y no percentil")
     st.markdown("""
-    - **Lookback de 5 años**: regímenes estructurales nuevos (ej. tasas altas
+    - **Conserva magnitud:** un Z = -3 es 3× más extremo que un Z = -1, mientras
+      que un percentil rolling truncaría ambos en la cola más baja.
+    - **Comparable en el tiempo:** el "Z = -1.5 hoy" significa lo mismo que el
+      "Z = -1.5 en 2010". Un percentil rolling no.
+    - **Sumable:** sumar Z-scores tiene sentido estadístico (combinación lineal
+      de variables aleatorias estandarizadas). Sumar percentiles no.
+    """)
+
+    st.markdown("### 6) Limitaciones honestas")
+    st.markdown("""
+    - **Lookback de 5 años**: regímenes estructurales nuevos (tasas altas
       persistentes 2022+) tardan en incorporarse al Z.
-    - El Z asume distribución aproximadamente normal. Las colas reales son
-      más gordas, así que valores |Z| > 3 ocurren más seguido que lo predicho.
-    - Sin componente fundamental (PER, earnings, macro) — es modelo de
-      sentimiento puro.
-    - Funciona mejor como **filtro táctico** y como **señal contraria en
-      extremos**, no como sistema de trading aislado.
+    - El Z asume distribución aproximadamente normal. Las **colas reales son
+      más gordas**, así que |Z| > 3 ocurre más seguido que lo predicho por una
+      gaussiana — no calibrar probabilidades exactas.
+    - **Sin fundamentales** (P/E, EPS, macro). Sentimiento puro.
+    - Funciona mejor como **filtro táctico** y **señal contraria en extremos**,
+      no como sistema de trading aislado.
     """)
 
-    st.markdown("### 6) Comparación con CNN F&G y Alternative.me")
+    st.markdown("### 7) Tabla comparativa final")
     st.markdown("""
-    | Aspecto                | CNN F&G        | BDI V1 (CNN replica) | BDI V2 (Pánico/Euforia) | Alternative.me |
-    |------------------------|----------------|----------------------|-------------------------|----------------|
-    | Universo               | Acciones US    | Acciones US          | Acciones + bonos + FX   | BTC            |
-    | Salida                 | 0–100          | 0–100                | Z-score (-3 a +3)       | 0–100          |
-    | Componentes            | 7              | 7                    | 9                       | 5              |
-    | Normalización          | Percentil      | Z + sigmoide         | Z bruto (5y)            | Mixto          |
-    | Pesos                  | Iguales        | Iguales              | Iguales o ajustables    | No publicado   |
-    | Frecuencia             | Diaria         | Diaria               | Diaria                  | Diaria         |
-    | Bond + FX              | Parcial        | Parcial              | Sí                      | No             |
+    | Aspecto                | CNN F&G        | BDI V1 (CNN replica)| **BDI V2 (este)**       | Alternative.me  |
+    |------------------------|----------------|---------------------|-------------------------|-----------------|
+    | Universo               | Acciones US    | Acciones US         | Acciones + Bonds + FX   | BTC             |
+    | Salida                 | 0–100          | 0–100               | **Z-score (-3..+3)**    | 0–100           |
+    | Componentes            | 7              | 7                   | **9**                   | 5               |
+    | Normalización          | Percentil      | Z + sigmoide        | **Z bruto (5y)**        | Mixto           |
+    | Pesos                  | No publicados  | Iguales (1/7)       | **Iguales o ajustables**| No publicado    |
+    | Frecuencia             | Diaria         | Diaria              | Diaria                  | Diaria          |
+    | Bond + FX              | Parcial        | Parcial             | **Sí**                  | No              |
     """)
 
 # ------------------------------- DATOS ----------------------------------------
