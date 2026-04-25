@@ -1,0 +1,19 @@
+# Tema BDI Consultora — Style Guide oficial
+# Verde: #137247 · Turquesa: #17BEBB · Lima: #B5E61D
+# Gris: #323232 · Crema: #EFEDEA
+
+[theme]
+base = "dark"
+primaryColor = "#B5E61D"
+backgroundColor = "#1c1c1c"
+secondaryBackgroundColor = "#323232"
+textColor = "#EFEDEA"
+font = "sans serif"
+
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
